@@ -100,8 +100,8 @@ static twai_message_t data_message = {
     .dlc_non_comp = 0,      // DLC is less than 8
     // Message ID and payload
     .identifier = ID_SLAVE_DATA,
-    .data_length_code = 4,
-    .data = {1, 2, 3, 4},
+    .data_length_code = 8,
+    .data = {0},
 };
 
 static QueueHandle_t tx_task_queue;
@@ -169,14 +169,22 @@ static void twai_transmit_task(void *arg)
         } else if (action == TX_SEND_DATA) {
             //Transmit data messages until stop command is received
             ESP_LOGI(EXAMPLE_TAG, "Start transmitting data");
+            uint32_t rpm = 600;
             while (1) {
                 //FreeRTOS tick count used to simulate sensor data
-                uint32_t sensor_data = xTaskGetTickCount();
-                for (int i = 0; i < 4; i++) {
-                    data_message.data[i] = (sensor_data >> (i * 8)) & 0xFF;
-                }
+                // uint32_t sensor_data = xTaskGetTickCount();
+                // for (int i = 0; i < 4; i++) {
+                //     data_message.data[i] = (sensor_data >> (i * 8)) & 0xFF;
+                // }
+                div_t result = div(rpm*4, 256);
+                data_message.data[1] = result.quot;
+                data_message.data[2] = result.rem;
+                rpm += 10;
+
                 twai_transmit(&data_message, portMAX_DELAY);
-                ESP_LOGI(EXAMPLE_TAG, "Transmitted data value %"PRIu32, sensor_data);
+                // ESP_LOGI(EXAMPLE_TAG, "Transmitted quot value %"PRIu16, result.quot);
+                // ESP_LOGI(EXAMPLE_TAG, "Transmitted rem value %"PRIu16, result.rem);
+                ESP_LOGI(EXAMPLE_TAG, "Transmitted rpm value %"PRIu32, rpm);
                 vTaskDelay(pdMS_TO_TICKS(DATA_PERIOD_MS));
                 if (xSemaphoreTake(stop_data_sem, 0) == pdTRUE) {
                     break;

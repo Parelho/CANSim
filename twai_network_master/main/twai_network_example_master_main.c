@@ -134,12 +134,20 @@ static void twai_receive_task(void *arg)
                 twai_message_t rx_msg;
                 twai_receive(&rx_msg, portMAX_DELAY);
                 if (rx_msg.identifier == ID_SLAVE_DATA) {
-                    uint32_t data = 0;
-                    for (int i = 0; i < rx_msg.data_length_code; i++) {
-                        data |= (rx_msg.data[i] << (i * 8));
-                    }
-                    ESP_LOGI(EXAMPLE_TAG, "Received data value %"PRIu32, data);
+                    // uint32_t data = 0;
+                    // for (int i = 0; i < rx_msg.data_length_code; i++) {
+                    //     data |= (rx_msg.data[i] << (i * 8));
+                    // }
+                    // ESP_LOGI(EXAMPLE_TAG, "Received data value %"PRIu32, data);
                     data_msgs_rec ++;
+
+                    uint32_t quot = rx_msg.data[1];
+                    uint32_t rem = rx_msg.data[2];
+                    uint32_t rpm = (quot * 256 + rem)/4;
+                    // ESP_LOGI(EXAMPLE_TAG, "Received quot value %"PRIu32, quot);
+                    // ESP_LOGI(EXAMPLE_TAG, "Received rem value %"PRIu32, rem);
+                    ESP_LOGI(EXAMPLE_TAG, "Received rpm value %"PRIu32, rpm);
+
                 }
             }
             xSemaphoreGive(ctrl_task_sem);
